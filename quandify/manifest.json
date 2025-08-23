@@ -1,0 +1,21 @@
+{
+  "domain": "quandify",
+  "name": "Quandify",
+  "version": "0.1.0",
+  "documentation": "https://github.com/davidlundberg-quandify/ha-watergrip",
+  "issue_tracker": "https://github.com/davidlundberg-quandify/ha-watergrip/issues",
+  "codeowners": [
+    "@your-github"
+  ],
+  "iot_class": "cloud_push",
+  "config_flow": true,
+  "requirements": [
+    "aiohttp>=3.9.0"
+  ],
+  "loggers": [
+    "custom_components.quandify"
+  ],
+  "dependencies": [
+    "webhook"
+  ]
+}
