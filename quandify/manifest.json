@@ -1,13 +1,21 @@
 {
-  "domain": "watergrip",
-  "name": "Quandify Water Grip (Cloud)",
+  "domain": "quandify",
+  "name": "Quandify",
   "version": "0.1.0",
-  "documentation": "https://github.com/your-github-username/ha-watergrip",
-  "issue_tracker": "https://github.com/your-github-username/ha-watergrip/issues",
-  "codeowners": ["@your-github-username"],
+  "documentation": "https://github.com/davidlundberg-quandify/ha-watergrip",
+  "issue_tracker": "https://github.com/davidlundberg-quandify/ha-watergrip/issues",
+  "codeowners": [
+    "@your-github"
+  ],
   "iot_class": "cloud_push",
   "config_flow": true,
-  "requirements": ["aiohttp>=3.9.0"],
-  "loggers": ["custom_components.watergrip"],
-  "dependencies": ["webhook"]
+  "requirements": [
+    "aiohttp>=3.9.0"
+  ],
+  "loggers": [
+    "custom_components.quandify"
+  ],
+  "dependencies": [
+    "webhook"
+  ]
 }

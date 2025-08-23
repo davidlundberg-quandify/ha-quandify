@@ -1,10 +1,10 @@
-"""DataUpdateCoordinator for the Quandify Water Grip integration."""
-
+"""DataUpdateCoordinator for the Quandify integration."""
 import asyncio
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from typing import Any
 
+import aiohttp.web
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -34,9 +34,8 @@ class WaterGripDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Update data via library."""
+        """Update data via library by polling."""
         try:
-            # FIX (TID251): Use the built-in asyncio.timeout instead of async_timeout.
             async with asyncio.timeout(30):
                 if not self.api.organization_id:
                     await self.api.get_account_info()
@@ -48,6 +47,27 @@ class WaterGripDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     data[device_id] = device_info
                 return data
         except Exception as exception:
-            raise UpdateFailed(
-                f"Error communicating with API: {exception}"
-            ) from exception
+            raise UpdateFailed(f"Error communicating with API: {exception}") from exception
+
+    async def handle_webhook(self, hass: HomeAssistant, webhook_id: str, request: aiohttp.web.Request) -> None:
+        """Handle incoming webhook with real-time device data."""
+        _LOGGER.debug("Received webhook: %s", webhook_id)
+        try:
+            data = await request.json()
+            _LOGGER.debug("Webhook payload: %s", data)
+        except ValueError:
+            _LOGGER.warning("Received invalid JSON in webhook")
+            return
+
+        # Assuming the webhook payload contains the full device info structure
+        device_id = data.get("id")
+        if not device_id:
+            _LOGGER.warning("Webhook payload missing device ID")
+            return
+
+        # Create a copy of the current data and update it with the new payload
+        updated_data = self.data.copy()
+        updated_data[device_id] = data
+        
+        # Push the new data to all listeners (entities)
+        self.async_set_updated_data(updated_data)

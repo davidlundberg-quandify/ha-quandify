@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Quandify Water Grip",
+        "title": "Quandify",
         "description": "Enter your Quandify account credentials.",
         "data": {
           "email": "Email",

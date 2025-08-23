@@ -2,7 +2,7 @@
 
 from typing import Final
 
-DOMAIN: Final = "watergrip"
+DOMAIN: Final = "quandify"
 ATTRIBUTION: Final = "Data provided by Quandify"
 
 # API Endpoints
