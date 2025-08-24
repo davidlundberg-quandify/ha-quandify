@@ -114,3 +114,8 @@ class QuandifyAPI:
         """Get all info for a single device."""
         url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}"
         return await self._request("get", url)
+    
+    async def acknowledge_leak(self, device_id: str) -> None:
+        """Acknowledge a leak."""
+        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}/commands/acknowledge-alarm"
+        await self._request("post", url)

@@ -14,7 +14,15 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import QDataUpdateCoordinator
+from .util import get_device_profile
 
+# Define a mapping from the profile key (from util.py) to the binary sensor class
+PROFILE_TO_CLASS = {
+    "cubic_meter": "CubicMeterBinarySensor",
+    "cubic_detector": "CubicDetectorBinarySensor",
+    "water_grip": "WaterGripBinarySensor",
+    "cubic_secure": "CubicSecureBinarySensor",
+}
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -26,28 +34,11 @@ async def async_setup_entry(
     entities: list[BinarySensorEntity] = []
 
     for device in coordinator.devices:
-        device_type = device.get("type")
-        hardware_version = device.get("hardware_version")
-        sensor_class = None
-        device_name = "Unknown"
-
-        if device_type == "cubicmeter":
-            device_name = "CubicMeter"
-            sensor_class = CubicMeterBinarySensor
-        elif device_type == "cubicdetector":
-            device_name = "CubicDetector"
-            sensor_class = CubicDetectorBinarySensor
-        elif device_type == "waterfuse":
-            if hardware_version == 5:
-                device_name = "Water Grip"
-                sensor_class = WaterGripBinarySensor
-            elif hardware_version == 4:
-                device_name = "CubicSecure"
-                sensor_class = CubicSecureBinarySensor
-
-        # FIX (PERF401): Replaced the for-loop with a more performant
-        # list comprehension and the extend method.
-        if sensor_class:
+        device_name, profile_key = get_device_profile(device)
+        
+        class_name = PROFILE_TO_CLASS.get(profile_key)
+        if class_name:
+            sensor_class = globals()[class_name]
             entities.extend(
                 [
                     sensor_class(coordinator, device, description, device_name)
@@ -85,7 +76,6 @@ class QuandifyBinarySensor(
             "model": device_name,
             "serial_number": device.get("serial"),
             "sw_version": device.get("firmware_version"),
-            "hw_version": device.get("hardware_version"),
         }
         self._update_attr()
 
@@ -106,24 +96,15 @@ class QuandifyBinarySensor(
                 value = value.get(key_part)
         except AttributeError:
             value = None
-
-        if self.entity_description.key == "is_offline":
-            self._attr_is_on = value is False
-        else:
-            self._attr_is_on = value is True
-
+        
+        self._attr_is_on = value is True
         self._attr_available = self.coordinator.last_update_success
-
 
 class WaterGripBinarySensor(QuandifyBinarySensor):
     """Represents binary sensors for a Water Grip device."""
-
+    
+    # FIX: Removed the 'is_offline' (Connectivity) sensor.
     ENTITY_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
-        BinarySensorEntityDescription(
-            key="is_offline",
-            name="Connectivity",
-            device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        ),
         BinarySensorEntityDescription(
             key="leak_status.is_leak",
             name="Leak",
@@ -135,12 +116,8 @@ class WaterGripBinarySensor(QuandifyBinarySensor):
 class CubicSecureBinarySensor(QuandifyBinarySensor):
     """Represents binary sensors for a CubicSecure device."""
 
+    # FIX: Removed the 'is_offline' (Connectivity) sensor.
     ENTITY_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
-        BinarySensorEntityDescription(
-            key="is_offline",
-            name="Connectivity",
-            device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        ),
         BinarySensorEntityDescription(
             key="leak_status.is_leak",
             name="Leak",
@@ -152,24 +129,15 @@ class CubicSecureBinarySensor(QuandifyBinarySensor):
 class CubicMeterBinarySensor(QuandifyBinarySensor):
     """Represents binary sensors for a CubicMeter device."""
 
-    ENTITY_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
-        BinarySensorEntityDescription(
-            key="is_offline",
-            name="Connectivity",
-            device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        ),
-    )
+    # FIX: This device has no binary sensors, so its descriptions are empty.
+    ENTITY_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = ()
 
 
 class CubicDetectorBinarySensor(QuandifyBinarySensor):
     """Represents binary sensors for a CubicDetector device."""
 
+    # FIX: Removed the 'is_offline' (Connectivity) sensor.
     ENTITY_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
-        BinarySensorEntityDescription(
-            key="is_offline",
-            name="Connectivity",
-            device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        ),
         BinarySensorEntityDescription(
             key="leak_status.is_leak",
             name="Leak",

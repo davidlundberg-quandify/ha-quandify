@@ -12,7 +12,6 @@ from .const import DOMAIN, UPDATE_INTERVAL_MINUTES
 
 _LOGGER = logging.getLogger(__name__)
 
-
 class QDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Class to manage fetching data from the API."""
 
@@ -22,6 +21,7 @@ class QDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         api: QuandifyAPI,
         devices: list[dict[str, Any]],
     ):
+
         """Initialize."""
         self.api = api
         self.devices = devices
