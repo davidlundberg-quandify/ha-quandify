@@ -1,4 +1,4 @@
-"""API client for Quandify Water Grip."""
+"""Quandify API client ."""
 
 import logging
 from typing import Any
@@ -13,7 +13,7 @@ from .const import API_BASE_URL, AUTH_BASE_URL, CONF_ID_TOKEN, CONF_REFRESH_TOKE
 _LOGGER = logging.getLogger(__name__)
 
 
-class QuandifyWaterGripAPI:
+class QuandifyAPI:
     """A class for interacting with the Quandify Water Grip API."""
 
     def __init__(
@@ -54,8 +54,6 @@ class QuandifyWaterGripAPI:
         except aiohttp.ClientError as err:
             _LOGGER.error("Failed to refresh token: %s", err)
             raise ConfigEntryAuthFailed("Failed to refresh token") from err
-        # FIX (TRY300): Moved the success logic into an 'else' block. This code
-        # now only runs if the 'try' block completed without an error.
         else:
             self._config[CONF_ID_TOKEN] = data["id_token"]
             self._config[CONF_REFRESH_TOKEN] = data["refresh_token"]
@@ -89,8 +87,6 @@ class QuandifyWaterGripAPI:
                         if response.content_type == "application/json"
                         else await response.text()
                     )
-            # FIX (TRY201): Use a bare 'raise' to re-raise the caught exception.
-            # This preserves the original error traceback for better debugging.
             raise
 
     async def get_account_info(self) -> None:
@@ -118,27 +114,8 @@ class QuandifyWaterGripAPI:
         """Get all info for a single device."""
         url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}"
         return await self._request("get", url)
-
+    
     async def acknowledge_leak(self, device_id: str) -> None:
         """Acknowledge a leak."""
-        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}/actions/ack_leak"
+        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}/commands/acknowledge-alarm"
         await self._request("post", url)
-
-    async def register_webhook(self, webhook_url: str) -> str | None:
-        """Register a webhook."""
-        url = f"{API_BASE_URL}/integrations/webhooks"
-        payload = {"url": webhook_url, "version": 2}
-        try:
-            response = await self._request("post", url, json=payload)
-            return response.get("webhookId") if isinstance(response, dict) else None
-        except aiohttp.ClientError as err:
-            _LOGGER.error("Failed to register webhook: %s", err)
-            return None
-
-    async def delete_webhook(self, webhook_id: str) -> None:
-        """Delete a webhook."""
-        url = f"{API_BASE_URL}/integrations/webhooks/{webhook_id}"
-        try:
-            await self._request("delete", url)
-        except aiohttp.ClientError as err:
-            _LOGGER.warning("Failed to delete webhook %s: %s", webhook_id, err)

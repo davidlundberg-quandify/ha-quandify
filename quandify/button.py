@@ -1,4 +1,4 @@
-"""Button platform for Quandify Water Grip."""
+"""Button platform for Quandify integration."""
 
 import logging
 from typing import Any
@@ -13,10 +13,17 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import WaterGripDataUpdateCoordinator
+from .coordinator import QDataUpdateCoordinator
+from .util import get_device_profile
 
 _LOGGER = logging.getLogger(__name__)
 
+# Define a mapping from the profile key (from util.py) to the button class
+PROFILE_TO_CLASS = {
+    "cubic_detector": "CubicDetectorButton",
+    "water_grip": "WaterGripButton",
+    "cubic_secure": "CubicSecureButton",
+}
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -24,40 +31,26 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the button entities based on device class."""
-    coordinator: WaterGripDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: QDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[ButtonEntity] = []
 
     for device in coordinator.devices:
-        device_type = device.get("type")
-        hardware_version = device.get("hardware_version")
-        button_class = None
-        device_name = "Unknown"
-
-        if device_type == "cubicmeter":
-            device_name = "CubicMeter"
-        elif device_type == "cubicdetector":
-            device_name = "CubicDetector"
-            button_class = CubicDetectorButton
-        elif device_type == "waterfuse":
-            if hardware_version == 5:
-                device_name = "Water Grip"
-                button_class = WaterGripButton
-            elif hardware_version == 4:
-                device_name = "CubicSecure"
-                button_class = CubicSecureButton
-
-        if button_class:
+        device_name, profile_key = get_device_profile(device)
+        
+        class_name = PROFILE_TO_CLASS.get(profile_key)
+        if class_name:
+            button_class = globals()[class_name]
             entities.append(button_class(coordinator, device, device_name))
 
     async_add_entities(entities)
 
 
-class QuandifyButton(CoordinatorEntity[WaterGripDataUpdateCoordinator], ButtonEntity):
+class QuandifyButton(CoordinatorEntity[QDataUpdateCoordinator], ButtonEntity):
     """Base button entity for all Quandify devices."""
 
     def __init__(
         self,
-        coordinator: WaterGripDataUpdateCoordinator,
+        coordinator: QDataUpdateCoordinator,
         device: dict[str, Any],
         device_name: str,
     ):
@@ -76,7 +69,6 @@ class QuandifyButton(CoordinatorEntity[WaterGripDataUpdateCoordinator], ButtonEn
             "model": device_name,
             "serial_number": device.get("serial"),
             "sw_version": device.get("firmware_version"),
-            "hw_version": device.get("hardware_version"),
         }
 
     async def async_press(self) -> None:
@@ -84,18 +76,15 @@ class QuandifyButton(CoordinatorEntity[WaterGripDataUpdateCoordinator], ButtonEn
         _LOGGER.info("Acknowledging leak for device %s", self.device["id"])
         try:
             await self.coordinator.api.acknowledge_leak(self.device["id"])
-        # FIX (BLE001): Catch a specific, expected exception instead of 'Exception'.
         except aiohttp.ClientError as err:
             _LOGGER.error("Failed to acknowledge leak: %s", err)
 
 
 class WaterGripButton(QuandifyButton):
-    """Represents the acknowledge leak button for a Water Grip device."""
-
+    pass
 
 class CubicSecureButton(QuandifyButton):
-    """Represents the acknowledge leak button for a CubicSecure device."""
-
+    pass
 
 class CubicDetectorButton(QuandifyButton):
-    """Represents the acknowledge leak button for a CubicDetector device."""
+    pass
