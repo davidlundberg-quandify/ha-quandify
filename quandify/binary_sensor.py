@@ -1,4 +1,4 @@
-"""Binary sensor platform for Quandify Water Grip."""
+"""Binary sensor platform for Quandify integration."""
 
 from typing import Any
 
@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import WaterGripDataUpdateCoordinator
+from .coordinator import QDataUpdateCoordinator
 
 
 async def async_setup_entry(
@@ -22,7 +22,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the binary sensor entities based on device class."""
-    coordinator: WaterGripDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: QDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[BinarySensorEntity] = []
 
     for device in coordinator.devices:
@@ -59,7 +59,7 @@ async def async_setup_entry(
 
 
 class QuandifyBinarySensor(
-    CoordinatorEntity[WaterGripDataUpdateCoordinator], BinarySensorEntity
+    CoordinatorEntity[QDataUpdateCoordinator], BinarySensorEntity
 ):
     """Base binary sensor entity for all Quandify devices."""
 
@@ -67,7 +67,7 @@ class QuandifyBinarySensor(
 
     def __init__(
         self,
-        coordinator: WaterGripDataUpdateCoordinator,
+        coordinator: QDataUpdateCoordinator,
         device: dict[str, Any],
         description: BinarySensorEntityDescription,
         device_name: str,

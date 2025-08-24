@@ -1,4 +1,4 @@
-"""Button platform for Quandify Water Grip."""
+"""Button platform for Quandify integration."""
 
 import logging
 from typing import Any
@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import WaterGripDataUpdateCoordinator
+from .coordinator import QDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the button entities based on device class."""
-    coordinator: WaterGripDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: QDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[ButtonEntity] = []
 
     for device in coordinator.devices:
@@ -52,12 +52,12 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class QuandifyButton(CoordinatorEntity[WaterGripDataUpdateCoordinator], ButtonEntity):
+class QuandifyButton(CoordinatorEntity[QDataUpdateCoordinator], ButtonEntity):
     """Base button entity for all Quandify devices."""
 
     def __init__(
         self,
-        coordinator: WaterGripDataUpdateCoordinator,
+        coordinator: QDataUpdateCoordinator,
         device: dict[str, Any],
         device_name: str,
     ):

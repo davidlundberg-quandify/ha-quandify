@@ -1,4 +1,4 @@
-"""Config flow for Quandify Water Grip."""
+"""Config flow for Quandify integration."""
 import logging
 from typing import Any
 
@@ -8,7 +8,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import QuandifyWaterGripAPI
+from .api import QuandifyAPI
 from .const import CONF_EMAIL, CONF_PASSWORD, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class QuandifyWaterGripConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             session = async_get_clientsession(self.hass)
-            api = QuandifyWaterGripAPI(self.hass, session, {})
+            api = QuandifyAPI(self.hass, session, {})
 
             try:
                 auth_data = await api.login(user_input[CONF_EMAIL], user_input[CONF_PASSWORD])

@@ -1,4 +1,4 @@
-"""Sensor platform for Quandify Water Grip."""
+"""Sensor platform for Quandify integration."""
 
 from typing import Any
 
@@ -15,7 +15,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import WaterGripDataUpdateCoordinator
+from .coordinator import QDataUpdateCoordinator
 
 
 async def async_setup_entry(
@@ -24,7 +24,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor entities based on device class."""
-    coordinator: WaterGripDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: QDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[SensorEntity] = []
 
     for device in coordinator.devices:
@@ -60,14 +60,14 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class QuandifyDevice(CoordinatorEntity[WaterGripDataUpdateCoordinator], SensorEntity):
+class QuandifyDevice(CoordinatorEntity[QDataUpdateCoordinator], SensorEntity):
     """Base sensor entity for all Quandify devices."""
 
     ENTITY_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = ()
 
     def __init__(
         self,
-        coordinator: WaterGripDataUpdateCoordinator,
+        coordinator: QDataUpdateCoordinator,
         device: dict[str, Any],
         description: SensorEntityDescription,
         device_name: str,

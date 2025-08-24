@@ -1,4 +1,4 @@
-"""Diagnostics support for Quandify Water Grip."""
+"""Diagnostics support for Quandify integration."""
 from __future__ import annotations
 
 from typing import Any
@@ -7,14 +7,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import CONF_ID_TOKEN, CONF_REFRESH_TOKEN, DOMAIN
-from .coordinator import WaterGripDataUpdateCoordinator
+from .coordinator import QDataUpdateCoordinator
 
 
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
-    coordinator: WaterGripDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: QDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     # Redact sensitive information
     redacted_data = dict(entry.data)

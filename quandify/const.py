@@ -1,4 +1,4 @@
-"""Constants for the Quandify Water Grip integration."""
+"""Constants for the Quandify integration."""
 
 from typing import Final
 
@@ -17,7 +17,6 @@ CONF_CLIENT_SECRET: Final = "client_secret"
 CONF_ID_TOKEN: Final = "id_token"
 CONF_REFRESH_TOKEN: Final = "refresh_token"
 CONF_EXP: Final = "exp"
-CONF_WEBHOOK_ID: Final = "webhook_id"
 
 # Data Update Coordinator
 UPDATE_INTERVAL_MINUTES: Final = 10

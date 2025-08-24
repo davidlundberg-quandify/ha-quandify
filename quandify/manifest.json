@@ -7,7 +7,7 @@
   "codeowners": [
     "@your-github"
   ],
-  "iot_class": "cloud_push",
+  "iot_class": "cloud_polling",
   "config_flow": true,
   "requirements": [
     "aiohttp>=3.9.0"
@@ -15,7 +15,5 @@
   "loggers": [
     "custom_components.quandify"
   ],
-  "dependencies": [
-    "webhook"
-  ]
+  "dependencies": []
 }
