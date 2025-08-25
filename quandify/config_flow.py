@@ -13,7 +13,8 @@ from .const import CONF_EMAIL, CONF_PASSWORD, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-class QuandifyWaterGripConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+
+class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Quandify Water Grip."""
 
     VERSION = 1

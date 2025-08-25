@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import QDataUpdateCoordinator
+from .coordinator import QuandifyDataUpdateCoordinator
 from .util import get_device_profile
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,18 +25,19 @@ PROFILE_TO_CLASS = {
     "cubic_secure": "CubicSecureButton",
 }
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the button entities based on device class."""
-    coordinator: QDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: QuandifyDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[ButtonEntity] = []
 
     for device in coordinator.devices:
         device_name, profile_key = get_device_profile(device)
-        
+
         class_name = PROFILE_TO_CLASS.get(profile_key)
         if class_name:
             button_class = globals()[class_name]
@@ -45,12 +46,12 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class QuandifyButton(CoordinatorEntity[QDataUpdateCoordinator], ButtonEntity):
+class QuandifyButton(CoordinatorEntity[QuandifyDataUpdateCoordinator], ButtonEntity):
     """Base button entity for all Quandify devices."""
 
     def __init__(
         self,
-        coordinator: QDataUpdateCoordinator,
+        coordinator: QuandifyDataUpdateCoordinator,
         device: dict[str, Any],
         device_name: str,
     ):
@@ -83,8 +84,10 @@ class QuandifyButton(CoordinatorEntity[QDataUpdateCoordinator], ButtonEntity):
 class WaterGripButton(QuandifyButton):
     pass
 
+
 class CubicSecureButton(QuandifyButton):
     pass
+
 
 class CubicDetectorButton(QuandifyButton):
     pass

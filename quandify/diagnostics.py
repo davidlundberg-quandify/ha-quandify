@@ -7,14 +7,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import CONF_ID_TOKEN, CONF_REFRESH_TOKEN, DOMAIN
-from .coordinator import QDataUpdateCoordinator
+from .coordinator import QuandifyDataUpdateCoordinator
 
 
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
-    coordinator: QDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: QuandifyDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     # Redact sensitive information
     redacted_data = dict(entry.data)

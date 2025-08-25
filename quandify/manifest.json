@@ -2,8 +2,7 @@
   "domain": "quandify",
   "name": "Quandify",
   "version": "0.1.0",
-  "documentation": "https://github.com/davidlundberg-quandify/ha-watergrip",
-  "issue_tracker": "https://github.com/davidlundberg-quandify/ha-watergrip/issues",
+  "documentation": "https://github.com/davidlundberg-quandify/ha-quandify",
   "codeowners": [
     "@your-github"
   ],

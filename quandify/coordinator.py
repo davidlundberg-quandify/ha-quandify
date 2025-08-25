@@ -12,7 +12,8 @@ from .const import DOMAIN, UPDATE_INTERVAL_MINUTES
 
 _LOGGER = logging.getLogger(__name__)
 
-class QDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+
+class QuandifyDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Class to manage fetching data from the API."""
 
     def __init__(
@@ -21,7 +22,6 @@ class QDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         api: QuandifyAPI,
         devices: list[dict[str, Any]],
     ):
-
         """Initialize."""
         self.api = api
         self.devices = devices
@@ -46,4 +46,5 @@ class QDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     data[device_id] = device_info
                 return data
         except Exception as exception:
-            raise UpdateFailed(f"Error communicating with API: {exception}") from exception
+            raise UpdateFailed(
+                f"Error communicating with API: {exception}") from exception

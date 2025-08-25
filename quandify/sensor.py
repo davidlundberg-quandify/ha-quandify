@@ -19,7 +19,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import QDataUpdateCoordinator
+from .coordinator import QuandifyDataUpdateCoordinator
 from .util import get_device_profile
 
 # Define a mapping from the profile key (from util.py) to the sensor class
@@ -30,18 +30,19 @@ PROFILE_TO_CLASS = {
     "cubic_secure": "CubicSecure",
 }
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor entities based on device class."""
-    coordinator: QDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: QuandifyDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[SensorEntity] = []
 
     for device in coordinator.devices:
         device_name, profile_key = get_device_profile(device)
-        
+
         class_name = PROFILE_TO_CLASS.get(profile_key)
         if class_name:
             sensor_class = globals()[class_name]
@@ -60,14 +61,16 @@ HOT_COLD_DESCRIPTION = SensorEntityDescription(
     name="Device type",
     icon="mdi:water-thermometer",
 )
-class QuandifyDevice(CoordinatorEntity[QDataUpdateCoordinator], SensorEntity):
+
+
+class QuandifySensor(CoordinatorEntity[QuandifyDataUpdateCoordinator], SensorEntity):
     """Base sensor entity for all Quandify devices."""
 
     ENTITY_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = ()
 
     def __init__(
         self,
-        coordinator: QDataUpdateCoordinator,
+        coordinator: QuandifyDataUpdateCoordinator,
         device: dict[str, Any],
         description: SensorEntityDescription,
         device_name: str,
@@ -97,8 +100,7 @@ class QuandifyDevice(CoordinatorEntity[QDataUpdateCoordinator], SensorEntity):
     def _update_attr(self) -> None:
         """Update the state and attributes of the entity."""
         device_data = self.coordinator.data.get(self.device["id"], {})
-        
-        # FIX: Add custom logic for the Hot/Cold sensor
+
         if self.entity_description.key == "sub_type":
             sub_type_value = device_data.get("sub_type")
             if sub_type_value == "hot":
@@ -106,9 +108,8 @@ class QuandifyDevice(CoordinatorEntity[QDataUpdateCoordinator], SensorEntity):
             elif sub_type_value == "cold":
                 self._attr_native_value = "Cold"
             else:
-                self._attr_native_value = None # "Unknown"
+                self._attr_native_value = None  # "Unknown"
         else:
-            # Standard logic for all other sensors
             value = device_data
             try:
                 for key_part in self.entity_description.key.split("."):
@@ -118,11 +119,11 @@ class QuandifyDevice(CoordinatorEntity[QDataUpdateCoordinator], SensorEntity):
             except AttributeError:
                 value = None
             self._attr_native_value = value
-        
+
         self._attr_available = self.coordinator.last_update_success
 
 
-class WaterGrip(QuandifyDevice):
+class WaterGrip(QuandifySensor):
     """Represents sensors for a Water Grip device."""
 
     ENTITY_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
@@ -146,12 +147,12 @@ class WaterGrip(QuandifyDevice):
             native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
             device_class=SensorDeviceClass.SIGNAL_STRENGTH,
             state_class=SensorStateClass.MEASUREMENT
-            ),
+        ),
         HOT_COLD_DESCRIPTION,
     )
 
 
-class CubicSecure(QuandifyDevice):
+class CubicSecure(QuandifySensor):
     """Represents sensors for a CubicSecure device."""
 
     ENTITY_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
@@ -175,12 +176,12 @@ class CubicSecure(QuandifyDevice):
             native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
             device_class=SensorDeviceClass.SIGNAL_STRENGTH,
             state_class=SensorStateClass.MEASUREMENT,
-            ),
+        ),
         HOT_COLD_DESCRIPTION,
     )
 
 
-class CubicMeter(QuandifyDevice):
+class CubicMeter(QuandifySensor):
     """Represents sensors for a CubicMeter device."""
 
     ENTITY_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
@@ -202,7 +203,7 @@ class CubicMeter(QuandifyDevice):
     )
 
 
-class CubicDetector(QuandifyDevice):
+class CubicDetector(QuandifySensor):
     """Represents sensors for a CubicDetector device."""
     # FIX: Add the new sensor to this device type
     ENTITY_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
@@ -212,5 +213,5 @@ class CubicDetector(QuandifyDevice):
             native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
             device_class=SensorDeviceClass.SIGNAL_STRENGTH,
             state_class=SensorStateClass.MEASUREMENT
-            ),
+        ),
     )

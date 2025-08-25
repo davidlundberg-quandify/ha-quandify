@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import QDataUpdateCoordinator
+from .coordinator import QuandifyDataUpdateCoordinator
 from .util import get_device_profile
 
 # Define a mapping from the profile key (from util.py) to the binary sensor class
@@ -24,18 +24,19 @@ PROFILE_TO_CLASS = {
     "cubic_secure": "CubicSecureBinarySensor",
 }
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the binary sensor entities based on device class."""
-    coordinator: QDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: QuandifyDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[BinarySensorEntity] = []
 
     for device in coordinator.devices:
         device_name, profile_key = get_device_profile(device)
-        
+
         class_name = PROFILE_TO_CLASS.get(profile_key)
         if class_name:
             sensor_class = globals()[class_name]
@@ -50,7 +51,7 @@ async def async_setup_entry(
 
 
 class QuandifyBinarySensor(
-    CoordinatorEntity[QDataUpdateCoordinator], BinarySensorEntity
+    CoordinatorEntity[QuandifyDataUpdateCoordinator], BinarySensorEntity
 ):
     """Base binary sensor entity for all Quandify devices."""
 
@@ -58,7 +59,7 @@ class QuandifyBinarySensor(
 
     def __init__(
         self,
-        coordinator: QDataUpdateCoordinator,
+        coordinator: QuandifyDataUpdateCoordinator,
         device: dict[str, Any],
         description: BinarySensorEntityDescription,
         device_name: str,
@@ -96,13 +97,14 @@ class QuandifyBinarySensor(
                 value = value.get(key_part)
         except AttributeError:
             value = None
-        
+
         self._attr_is_on = value is True
         self._attr_available = self.coordinator.last_update_success
 
+
 class WaterGripBinarySensor(QuandifyBinarySensor):
     """Represents binary sensors for a Water Grip device."""
-    
+
     # FIX: Removed the 'is_offline' (Connectivity) sensor.
     ENTITY_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
         BinarySensorEntityDescription(
