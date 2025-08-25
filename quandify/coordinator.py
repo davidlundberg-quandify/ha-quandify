@@ -9,19 +9,14 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import QuandifyAPI
 from .const import DOMAIN, UPDATE_INTERVAL_MINUTES
+from .models import QuandifyDevice
 
 _LOGGER = logging.getLogger(__name__)
-
 
 class QuandifyDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Class to manage fetching data from the API."""
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        api: QuandifyAPI,
-        devices: list[dict[str, Any]],
-    ):
+    def __init__(self, hass: HomeAssistant, api: QuandifyAPI, devices: list[QuandifyDevice]):
         """Initialize."""
         self.api = api
         self.devices = devices
@@ -41,9 +36,8 @@ class QuandifyDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
                 data = {}
                 for device in self.devices:
-                    device_id = device["id"]
-                    device_info = await self.api.get_device_info(device_id)
-                    data[device_id] = device_info
+                    device_info = await self.api.get_device_info(device.id)
+                    data[device.id] = device_info
                 return data
         except Exception as exception:
             raise UpdateFailed(

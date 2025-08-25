@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Quandify Water Grip."""
+    """Handle a config flow for Quandify."""
 
     VERSION = 1
 
@@ -24,12 +24,13 @@ class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             session = async_get_clientsession(self.hass)
-            api = QuandifyAPI(self.hass, session, {})
+            # FIX: The constructor call now matches the updated QuandifyAPI class.
+            api = QuandifyAPI(session, {})
 
             try:
                 auth_data = await api.login(user_input[CONF_EMAIL], user_input[CONF_PASSWORD])
             except aiohttp.ClientResponseError as err:
-                if err.status == 401:
+                if err.status in (401, 404):
                     errors["base"] = "invalid_auth"
                 else:
                     errors["base"] = "cannot_connect"
@@ -39,12 +40,10 @@ class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
             else:
-                await self.async_set_unique_id(user_input[CONF_EMAIL])
+                await self.async_set_unique_id(user_input[CONF_EMAIL].lower())
                 self._abort_if_unique_id_configured()
 
-                # Combine user input and auth data for the config entry
                 entry_data = {**user_input, **auth_data}
-                # Do not store password
                 entry_data.pop(CONF_PASSWORD)
 
                 return self.async_create_entry(

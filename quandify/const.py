@@ -1,8 +1,8 @@
 """Constants for the Quandify integration."""
-
 from typing import Final
 
 DOMAIN: Final = "quandify"
+ATTRIBUTION: Final = "Data provided by Quandify"
 
 # API Endpoints
 AUTH_BASE_URL: Final = "https://auth.quandify.com"
