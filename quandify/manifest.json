@@ -1,18 +1,15 @@
 {
   "domain": "quandify",
   "name": "Quandify",
-  "version": "0.1.0",
-  "documentation": "https://github.com/davidlundberg-quandify/ha-quandify",
+  "version": "1.0.0",
+  "documentation": "https://www.home-assistant.io/integrations/quandify",
   "codeowners": [
-    "@your-github"
+    "@davidlundberg-quandify"
   ],
   "iot_class": "cloud_polling",
   "config_flow": true,
-  "requirements": [
-    "aiohttp>=3.9.0"
-  ],
+  "requirements": [],
   "loggers": [
     "custom_components.quandify"
-  ],
-  "dependencies": []
+  ]
 }

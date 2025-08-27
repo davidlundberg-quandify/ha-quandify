@@ -10,6 +10,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import QuandifyAPI
 from .const import DOMAIN
 from .coordinator import QuandifyDataUpdateCoordinator
+from .models import QuandifyDevice
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,20 +19,21 @@ PLATFORMS = ["sensor", "binary_sensor", "button"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Quandify devices from a config entry."""
-    hass.data.setdefault(DOMAIN, {})
     session = async_get_clientsession(hass)
 
-    api = QuandifyAPI(hass, session, dict(entry.data))
+    api = QuandifyAPI(session, dict(entry.data))
 
     try:
-        devices = await api.get_devices()
+        raw_devices = await api.get_devices()
+        devices = [QuandifyDevice.from_api(
+            device_data) for device_data in raw_devices]
     except aiohttp.ClientError as err:
         raise ConfigEntryNotReady(f"Failed to get devices: {err}") from err
 
     coordinator = QuandifyDataUpdateCoordinator(hass, api, devices)
     await coordinator.async_config_entry_first_refresh()
 
-    hass.data[DOMAIN][entry.entry_id] = coordinator
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
