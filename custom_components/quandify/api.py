@@ -110,3 +110,13 @@ class QuandifyAPI:
         """Acknowledge a leak."""
         url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}/commands/acknowledge-alarm"
         await self._request("post", url)
+
+    async def open_valve(self, device_id: str) -> None:
+        """Open the valve on a device."""
+        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}/commands/open-valve"
+        await self._request("post", url)
+
+    async def close_valve(self, device_id: str) -> None:
+        """Close the valve on a device."""
+        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}/commands/close-valve"
+        await self._request("post", url)
