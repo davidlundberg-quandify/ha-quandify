@@ -6,13 +6,15 @@ import aiohttp
 import voluptuous as vol
 
 from homeassistant import config_entries
+# FIX: Import ConfigEntryAuthFailed to catch it specifically
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import QuandifyAPI
+# FIX: Import our new custom exception
+from .api import QuandifyAPI, QuandifyAPIError
 from .const import CONF_EMAIL, CONF_PASSWORD, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
-
 
 class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Quandify."""
@@ -24,20 +26,18 @@ class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             session = async_get_clientsession(self.hass)
-            # FIX: The constructor call now matches the updated QuandifyAPI class.
             api = QuandifyAPI(session, {})
 
             try:
                 auth_data = await api.login(user_input[CONF_EMAIL], user_input[CONF_PASSWORD])
-            except aiohttp.ClientResponseError as err:
-                if err.status in (401, 404):
-                    errors["base"] = "invalid_auth"
-                else:
-                    errors["base"] = "cannot_connect"
-            except aiohttp.ClientError:
+            
+            # FIX: Catch the specific exceptions from the API client
+            except ConfigEntryAuthFailed:
+                errors["base"] = "invalid_auth"
+            except (aiohttp.ClientError, QuandifyAPIError):
                 errors["base"] = "cannot_connect"
             except Exception:
-                _LOGGER.exception("Unexpected exception")
+                _LOGGER.exception("An unexpected error occurred during login")
                 errors["base"] = "unknown"
             else:
                 await self.async_set_unique_id(user_input[CONF_EMAIL].lower())
