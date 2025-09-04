@@ -1,7 +1,5 @@
 """Button platform for Quandify integration."""
 import logging
-from typing import Any, Coroutine
-
 import aiohttp
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
@@ -16,9 +14,8 @@ from .models import QuandifyDevice
 
 _LOGGER = logging.getLogger(__name__)
 
-# Define the button "profiles" for each device class
 DEVICE_BUTTONS = {
-    "Water Grip": ["acknowledge", "open_valve", "close_valve"],
+    "Water Grip": ["acknowledge",],
     "CubicSecure": ["acknowledge", "open_valve", "close_valve"],
     "CubicDetector": ["acknowledge"],
 }
@@ -44,12 +41,8 @@ class QuandifyButton(QuandifyEntity, ButtonEntity):
     """Base button entity for all Quandify devices."""
     _attr_entity_category = EntityCategory.CONFIG
 
-    def __init__(self, coordinator: QuandifyDataUpdateCoordinator, device: QuandifyDevice):
-        """Initialize the button."""
-        super().__init__(coordinator, device)
-        # The specific subclass will set the unique_id, name, and icon
-
-
+    def press(self) -> None:
+        pass
 class QuandifyAcknowledgeLeakButton(QuandifyButton):
     """Represents the acknowledge leak button."""
     _attr_name = "Acknowledge leak"
