@@ -11,7 +11,7 @@
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to the Quandify API. Please check your internet connection.",
+      "cannot_connect": "Failed to connect to Quandify platform. Please check your internet connection.",
       "invalid_auth": "Invalid username or password.",
       "unknown": "An unknown error occurred."
     },

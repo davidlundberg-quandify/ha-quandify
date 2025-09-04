@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import QuandifyAPI
+from .api import QuandifyAPI, QuandifyAPIError
 from .const import DOMAIN
 from .coordinator import QuandifyDataUpdateCoordinator
 from .models import QuandifyDevice
@@ -20,14 +20,14 @@ PLATFORMS = ["sensor", "binary_sensor", "button"]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Quandify devices from a config entry."""
     session = async_get_clientsession(hass)
-
     api = QuandifyAPI(session, dict(entry.data))
 
     try:
         raw_devices = await api.get_devices()
-        devices = [QuandifyDevice.from_api(
-            device_data) for device_data in raw_devices]
-    except aiohttp.ClientError as err:
+        devices = [QuandifyDevice.from_api(device_data) for device_data in raw_devices]
+    except (aiohttp.ClientError, ValueError, QuandifyAPIError) as err:
+        # Catching ValueError is important for the "ID is missing" errors in the API client.
+        _LOGGER.error("Failed to set up Quandify integration during device fetch: %s", err)
         raise ConfigEntryNotReady(f"Failed to get devices: {err}") from err
 
     coordinator = QuandifyDataUpdateCoordinator(hass, api, devices)
