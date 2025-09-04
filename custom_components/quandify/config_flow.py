@@ -6,11 +6,8 @@ import aiohttp
 import voluptuous as vol
 
 from homeassistant import config_entries
-# FIX: Import ConfigEntryAuthFailed to catch it specifically
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
-# FIX: Import our new custom exception
 from .api import QuandifyAPI, QuandifyAPIError
 from .const import CONF_EMAIL, CONF_PASSWORD, DOMAIN
 
@@ -31,7 +28,6 @@ class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 config = await api.login(user_input[CONF_EMAIL], user_input[CONF_PASSWORD])
             
-            # FIX: Catch the specific exceptions from the API client
             except ConfigEntryAuthFailed:
                 errors["base"] = "invalid_auth"
             except (aiohttp.ClientError, QuandifyAPIError):
@@ -43,8 +39,12 @@ class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(user_input[CONF_EMAIL].lower())
                 self._abort_if_unique_id_configured()
 
-                entry_data = {**user_input, **config}
-                entry_data.pop(CONF_PASSWORD)
+
+                # Configure data stored on disk
+                entry_data = {
+                    CONF_EMAIL: user_input[CONF_EMAIL],
+                    **config
+                }
 
                 return self.async_create_entry(
                     title=user_input[CONF_EMAIL],
