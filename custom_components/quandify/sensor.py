@@ -22,43 +22,43 @@ from .models import QuandifyDevice
 
 # Sensor descriptions
 TOTAL_VOLUME = SensorEntityDescription(
-    key="status.total_volume", 
-    name="Total Volume", 
+    key="status.total_volume",
+    name="Total volume",
     native_unit_of_measurement=UnitOfVolume.LITERS,
-    state_class=SensorStateClass.TOTAL_INCREASING, 
+    state_class=SensorStateClass.TOTAL_INCREASING,
     device_class=SensorDeviceClass.WATER)
 
 WATER_TEMP = SensorEntityDescription(
-    key="status.avg_water_temp", 
-    name="Water Temperature", 
+    key="status.avg_water_temp",
+    name="Water temperature",
     native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    state_class=SensorStateClass.MEASUREMENT, 
+    state_class=SensorStateClass.MEASUREMENT,
     device_class=SensorDeviceClass.TEMPERATURE)
 
 AMBIENT_TEMP = SensorEntityDescription(
-    key="status.ambient_temp", 
-    name="Ambient Temperature", 
+    key="status.ambient_temp",
+    name="Ambient temperature",
     native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    state_class=SensorStateClass.MEASUREMENT, 
+    state_class=SensorStateClass.MEASUREMENT,
     device_class=SensorDeviceClass.TEMPERATURE)
 
 WIFI_SIGNAL = SensorEntityDescription(
     key="status.wifi_signal_strength",
-    name="Signal Strength", 
+    name="Signal strength",
     native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
-    device_class=SensorDeviceClass.SIGNAL_STRENGTH, 
+    device_class=SensorDeviceClass.SIGNAL_STRENGTH,
     state_class=SensorStateClass.MEASUREMENT)
 
 RSSI_SIGNAL = SensorEntityDescription(
-    key="status.rssi", 
-    name="Signal Strength", 
+    key="status.rssi",
+    name="Signal strength",
     native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
-    device_class=SensorDeviceClass.SIGNAL_STRENGTH, 
+    device_class=SensorDeviceClass.SIGNAL_STRENGTH,
     state_class=SensorStateClass.MEASUREMENT)
 
 WATER_TYPE = SensorEntityDescription(
-    key="sub_type", 
-    name="Water Type", 
+    key="sub_type",
+    name="Water type",
     icon="mdi:water-thermometer")
 
 # Sensor profiles
@@ -79,7 +79,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                 QuandifySensor(coordinator, device, description) for description in descriptions
             )
     async_add_entities(entities)
-
 
 class QuandifySensor(QuandifyEntity, SensorEntity):
     """Implementation of a Quandify sensor."""

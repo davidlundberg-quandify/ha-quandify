@@ -112,9 +112,8 @@ class QuandifyAPI:
         url = f"{AUTH_BASE_URL}/refresh"
         payload = {"refresh_token": self._config.get(CONF_REFRESH_TOKEN)}
 
-        _LOGGER.debug("Attempting to refresh token")
-
         try:
+            _LOGGER.debug("Attempting to refresh token")
             response = await self.session.post(url, json=payload)
             response.raise_for_status()
             data: dict[str, Any] = await response.json()

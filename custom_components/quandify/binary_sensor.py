@@ -1,5 +1,4 @@
 """Binary sensor platform for Quandify integration."""
-from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -17,8 +16,8 @@ from .models import QuandifyDevice
 
 # Binary Sensor descriptions
 LEAK_SENSOR = BinarySensorEntityDescription(
-    key="leak_status.is_leak", 
-    name="Leak", 
+    key="leak_status.is_leak",
+    name="Leak",
     device_class=BinarySensorDeviceClass.MOISTURE)
 
 # Binary Sensor profiles
@@ -28,19 +27,17 @@ DEVICE_BINARY_SENSORS = {
     "CubicDetector": [LEAK_SENSOR],
 }
 
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Set up the binary sensor entities."""
     coordinator: QuandifyDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[QuandifyBinarySensor] = []
+
     for device in coordinator.devices:
         if descriptions := DEVICE_BINARY_SENSORS.get(device.model):
             entities.extend(
                 QuandifyBinarySensor(coordinator, device, description) for description in descriptions
             )
     async_add_entities(entities)
-
-
 class QuandifyBinarySensor(QuandifyEntity, BinarySensorEntity):
     """Implementation of a Quandify binary sensor."""
 
