@@ -64,9 +64,6 @@ WATER_TYPE = SensorEntityDescription(
 # Sensor profiles
 DEVICE_SENSORS = {
     "Water Grip": [TOTAL_VOLUME, WATER_TEMP, WIFI_SIGNAL, WATER_TYPE],
-    "CubicSecure": [TOTAL_VOLUME, WATER_TEMP, WIFI_SIGNAL, WATER_TYPE],
-    "CubicMeter": [TOTAL_VOLUME, AMBIENT_TEMP, WATER_TYPE],
-    "CubicDetector": [RSSI_SIGNAL],
 }
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:

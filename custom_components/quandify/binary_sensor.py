@@ -23,8 +23,6 @@ LEAK_SENSOR = BinarySensorEntityDescription(
 # Binary Sensor profiles
 DEVICE_BINARY_SENSORS = {
     "Water Grip": [LEAK_SENSOR],
-    "CubicSecure": [LEAK_SENSOR],
-    "CubicDetector": [LEAK_SENSOR],
 }
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
