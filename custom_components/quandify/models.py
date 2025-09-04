@@ -1,7 +1,6 @@
 """Models for the Quandify integration."""
 from dataclasses import dataclass
 from typing import Any
-
 @dataclass
 class QuandifyDevice:
     """A class representing a Quandify device."""
@@ -19,24 +18,15 @@ class QuandifyDevice:
         device_type = data.get("type")
         hardware_version = data.get("hardware_version")
         
-        # Determine the proper device name and model
         model = "Unknown"
-        name = data.get("name", "Unknown Device") # Use API name if available
+        node = data.get("node", {})
+        name = node.get("name", "Unknown Device")
 
-        if device_type == "cubicmeter":
-            model = "CubicMeter"
-        elif device_type == "cubicdetector":
-            model = "CubicDetector"
-        elif device_type == "waterfuse":
-            if hardware_version == 5:
-                model = "Water Grip"
-            elif hardware_version == 4:
-                model = "CubicSecure"
+        if device_type == "waterfuse" and hardware_version == 5:
+            model = "Water Grip"
+        else:
+            return None
         
-        # If the device has no specific name, use its model as the name
-        if name == "Unknown Device":
-            name = model
-
         return cls(
             id=data["id"],
             name=name,

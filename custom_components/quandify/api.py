@@ -21,7 +21,6 @@ class QuandifyAPI:
         """Initialize the API client."""
         self.session = session
         self._config = config
-        _LOGGER.info("Config: %s", str(self._config))
 
     async def _firebase_auth(self, email: str, password: str) -> dict[str, Any]:
         """Perform the full Firebase authentication flow to get all necessary IDs."""
@@ -38,7 +37,6 @@ class QuandifyAPI:
                 "returnSecureToken": True,
             }
 
-            _LOGGER.debug("Step 1/2: Attempting Firebase sign-in for %s", email)
             response = await self.session.post(signin_url, json=signin_payload)
             response.raise_for_status()
             signin_data = await response.json()
@@ -46,12 +44,10 @@ class QuandifyAPI:
 
             lookup_url = f"{FIREBASE_AUTH_BASE_URL}/accounts:lookup?key={FIREBASE_API_KEY}"
             lookup_payload = {"idToken": firebase_id_token}
-            _LOGGER.debug("Step 2/2: Looking up Firebase account to find custom attributes")
             response = await self.session.post(lookup_url, json=lookup_payload)
             response.raise_for_status()
             lookup_data = await response.json()
 
-            # Step 3: Extract the Quandify accountId from the customAttributes string.
             user_info = lookup_data.get("users", [{}])[0]
             custom_attributes_str = user_info.get("customAttributes", "{}")
             custom_attributes = json.loads(custom_attributes_str)
@@ -149,7 +145,7 @@ class QuandifyAPI:
                 return await response.text()
 
         except aiohttp.ClientResponseError as err:
-            # Check if the error is 401 Unauthorized AND we are allowed to retry once.
+            # Check if the error is 401 Unauthorized and we are allowed to retry once.
             if err.status == 401 and retry:
                 _LOGGER.info("Token expired or invalid, attempting refresh")
                 if await self._refresh_token():

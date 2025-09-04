@@ -16,8 +16,6 @@ _LOGGER = logging.getLogger(__name__)
 
 DEVICE_BUTTONS = {
     "Water Grip": ["acknowledge",],
-    "CubicSecure": ["acknowledge", "open_valve", "close_valve"],
-    "CubicDetector": ["acknowledge"],
 }
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
