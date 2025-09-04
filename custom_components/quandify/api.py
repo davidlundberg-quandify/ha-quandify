@@ -7,6 +7,8 @@ import aiohttp
 from homeassistant.exceptions import ConfigEntryAuthFailed
 
 from .const import API_BASE_URL, AUTH_BASE_URL, CONF_ID_TOKEN, CONF_REFRESH_TOKEN
+from .const import CONF_ACCOUNT_ID
+from .const import CONF_ORGANISATION_ID
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +20,6 @@ FIREBASE_TOKEN_URL = f"https://securetoken.googleapis.com/v1/token?key={FIREBASE
 class QuandifyAPIError(Exception):
     """Generic Quandify API exception."""
 
-
 class QuandifyAPI:
     """A class for interacting with the Quandify API."""
 
@@ -26,11 +27,15 @@ class QuandifyAPI:
         """Initialize the API client."""
         self.session = session
         self._config = config
-        self._api_headers = {"Authorization": f"Bearer {self._config.get(CONF_ID_TOKEN)}"}
-        self.account_id: str | None = None
-        self.organization_id: str | None = None
+        self._api_header: str = self._set_api_header()
 
-    async def _get_auth_details(self, email: str, password: str) -> dict[str, Any]:
+    def _set_api_header(self) -> None:
+        """Set the API headers from the current config."""
+        id_token = self._config.get(CONF_ID_TOKEN)
+        self._api_header = {"Authorization": f"Bearer {id_token}"} if id_token else {}
+        _LOGGER.info("Successfully refreshed authentication token")
+
+    async def _firebase_auth(self, email: str, password: str) -> dict[str, Any]:
         """Perform the full Firebase authentication flow to get all necessary IDs."""
         try:
             # Step 1: Sign in to Firebase to get the initial tokens.
@@ -59,23 +64,11 @@ class QuandifyAPI:
             if not account_id:
                 raise ConfigEntryAuthFailed("Could not find Quandify accountId in user profile")
                 
-
             return {
                 "account_id": account_id,
                 "id_token": firebase_id_token,
                 "refresh_token": signin_data["refreshToken"],
             }
-        
-        except aiohttp.ClientResponseError as err:
-            # FIX: Access the response object *inside* the error to get the JSON body.
-            error_body = await str(err)
-            _LOGGER.warning(
-                "Authentication failed with status %d: %s. Response: %s",
-                err.status,
-                err.message,
-                error_body
-            )
-            raise ConfigEntryAuthFailed("Invalid email or password provided.") from err
         
         except aiohttp.ClientError as err:
             _LOGGER.error("A connection error occurred during authentication: %s", err)
@@ -84,24 +77,42 @@ class QuandifyAPI:
         except (KeyError, json.JSONDecodeError) as err:
             _LOGGER.error("Received an unexpected response from the authentication API: %s", err)
             raise QuandifyAPIError("Unexpected API response during login.") from err
-    
-    async def login(self, email: str, password: str) -> dict[str, Any]:
-        try:
-            ret = await self._get_auth_details(email, password)
-            self.account_id = ret["account_id"]
-        except ConfigEntryAuthFailed as err:
-            raise err
-        
-        """Authenticate to the Quandify API."""
-        url = f"{AUTH_BASE_URL}/"
-        payload = {"account_id": self.account_id, "password": password}
-        _LOGGER.debug("Attempting to authenticate to %s", url)
-        response = await self.session.post(url, json=payload)
-        response.raise_for_status()
-        self.account_id = email
-        return await response.json()
 
-    async def refresh_token(self) -> bool:
+    async def login(self, email: str, password: str) -> dict[str, Any]:
+        """Log in to the Quandify API, performing the full authentication flow."""
+        try:
+            if not self._config.get(CONF_ACCOUNT_ID):
+                f_base = await self._firebase_auth(email, password)
+                self._config[CONF_ACCOUNT_ID] = f_base["account_id"]
+
+        except (aiohttp.ClientError, ValueError) as err:
+            _LOGGER.error("Failed to authenticate via Firebase: %s", err)
+            raise QuandifyAPIError("Failed to authenticate via Firebase") from err
+        
+        try:
+            if not self._config.get(CONF_ID_TOKEN):
+                auth_data = await self.auth(f_base["account_id"], password)
+                self._config[CONF_REFRESH_TOKEN] = auth_data["refresh_token"]
+                self._config[CONF_ID_TOKEN] = auth_data["id_token"]
+                self._set_api_header()
+  
+        except (aiohttp.ClientError, ValueError) as err:
+            _LOGGER.error("Failed to authenticate to Quandify API: %s", err)
+            raise QuandifyAPIError("Failed to authenticate to Quandify API") from err
+        
+        try:
+            if not self._config.get(CONF_ORGANISATION_ID):
+                organization_id = await self.get_organization_id()
+                self._config[CONF_ORGANISATION_ID] = organization_id
+
+        except (aiohttp.ClientError, ValueError) as err:
+            _LOGGER.error("Failed to get account info after login: %s", err)
+            raise QuandifyAPIError("Failed to get account info after login") from err
+
+        return self._config
+    
+
+    async def _refresh(self) -> bool:
         """Refresh the authentication token."""
         url = f"{AUTH_BASE_URL}/refresh"
         payload = {"refresh_token": self._config.get(CONF_REFRESH_TOKEN)}
@@ -119,60 +130,63 @@ class QuandifyAPI:
         else:
             self._config[CONF_ID_TOKEN] = data["id_token"]
             self._config[CONF_REFRESH_TOKEN] = data["refresh_token"]
-            self._api_headers["Authorization"] = f"Bearer {self._config[CONF_ID_TOKEN]}"
-            _LOGGER.info("Successfully refreshed authentication token")
+            self._set_api_header()
 
-            return True
+        return True
 
     async def _request(self, method: str, url: str, **kwargs: Any) -> Any:
         """Make a request, handling token refresh on 401 errors."""
         try:
-            response = await self.session.request(method, url, headers=self._api_headers, **kwargs)
+            response = await self.session.request(method, url, headers=self._api_header, **kwargs)
             response.raise_for_status()
             return await response.json() if response.content_type == "application/json" else await response.text()
         except QuandifyAPIError as err:
             raise QuandifyAPIError("Unexpected API response during login.") from err
 
     
-    async def get_account_info(self) -> None:
-        """Fetch account details to get the organizationId."""
-        if not self.account_id:
-            raise ValueError("Cannot get account info, account ID is missing.")
-        url = f"{AUTH_BASE_URL}/accounts/{self.account_id}"
-        _LOGGER.debug("Getting account info from %s", url)
-        account_data = await self._request("get", url)
-        self.organization_id = account_data.get("organizationId")
-        if not self.organization_id:
-            raise ValueError(
-                "Failed to retrieve organizationId from account info.")
+    async def auth(self, account_id: str, password: str) -> dict[str, Any]:
+        """Authenticate to the Quandify API."""
+        url = f"{AUTH_BASE_URL}/"
+        payload = {"account_id": account_id, "password": password}
+        _LOGGER.debug("Attempting to authenticate to %s", url)
+        response = await self.session.post(url, json=payload)
+        response.raise_for_status()
+        return await response.json()
 
-        _LOGGER.info("Found organizationId: %s", self.organization_id)
+    async def get_organization_id(self) -> None:
+        """Fetch account details to get the organizationId."""
+        account_id = self._config.get(CONF_ACCOUNT_ID)
+        url = f"{AUTH_BASE_URL}/accounts/{account_id}"
+        response = await self._request("get", url)
+        return response.get("organizationId")
 
     async def get_devices(self) -> list[dict[str, Any]]:
         """Fetch the list of devices."""
-        if not self.organization_id:
-            await self.get_account_info()
-        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/"
-        _LOGGER.debug("Getting devices from URL: %s", url)
+        organization_id = self._config.get(CONF_ORGANISATION_ID)
+        url = f"{API_BASE_URL}/organization/{organization_id}/devices/"
         response = await self._request("get", url)
         return response.get("data", [])
 
     async def get_device_info(self, device_id: str) -> dict[str, Any]:
         """Get all info for a single device."""
-        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}"
+        organization_id = self._config.get(CONF_ORGANISATION_ID)
+        url = f"{API_BASE_URL}/organization/{organization_id}/devices/{device_id}"
         return await self._request("get", url)
 
     async def acknowledge_leak(self, device_id: str) -> None:
         """Acknowledge a leak."""
-        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}/commands/acknowledge-alarm"
+        organization_id = self._config.get(CONF_ORGANISATION_ID)
+        url = f"{API_BASE_URL}/organization/{organization_id}/devices/{device_id}/commands/acknowledge-alarm"
         await self._request("post", url)
 
     async def open_valve(self, device_id: str) -> None:
         """Open the valve on a device."""
-        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}/commands/open-valve"
+        organization_id = self._config.get(CONF_ORGANISATION_ID)
+        url = f"{API_BASE_URL}/organization/{organization_id}/devices/{device_id}/commands/open-valve"
         await self._request("post", url)
 
     async def close_valve(self, device_id: str) -> None:
         """Close the valve on a device."""
-        url = f"{API_BASE_URL}/organization/{self.organization_id}/devices/{device_id}/commands/close-valve"
+        organization_id = self._config.get(CONF_ORGANISATION_ID)
+        url = f"{API_BASE_URL}/organization/{organization_id}/devices/{device_id}/commands/close-valve"
         await self._request("post", url)

@@ -29,7 +29,7 @@ class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             api = QuandifyAPI(session, {})
 
             try:
-                auth_data = await api.login(user_input[CONF_EMAIL], user_input[CONF_PASSWORD])
+                config = await api.login(user_input[CONF_EMAIL], user_input[CONF_PASSWORD])
             
             # FIX: Catch the specific exceptions from the API client
             except ConfigEntryAuthFailed:
@@ -43,7 +43,7 @@ class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(user_input[CONF_EMAIL].lower())
                 self._abort_if_unique_id_configured()
 
-                entry_data = {**user_input, **auth_data}
+                entry_data = {**user_input, **config}
                 entry_data.pop(CONF_PASSWORD)
 
                 return self.async_create_entry(

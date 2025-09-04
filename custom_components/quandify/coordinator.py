@@ -31,8 +31,8 @@ class QuandifyDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Update data via library by polling."""
         try:
             async with asyncio.timeout(30):
-                if not self.api.organization_id:
-                    await self.api.get_account_info()
+                if not self.api._organization_id:
+                    await self.api.get_organization_id()
 
                 data = {}
                 for device in self.devices:
