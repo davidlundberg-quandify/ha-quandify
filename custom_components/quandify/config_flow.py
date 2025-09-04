@@ -27,13 +27,13 @@ class QuandifyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             try:
                 config = await api.login(user_input[CONF_EMAIL], user_input[CONF_PASSWORD])
-            
+
             except ConfigEntryAuthFailed:
                 errors["base"] = "invalid_auth"
             except (aiohttp.ClientError, QuandifyAPIError):
                 errors["base"] = "cannot_connect"
-            except Exception:
-                _LOGGER.exception("An unexpected error occurred during login")
+            except Exception as err:
+                _LOGGER.exception("An unexpected error occurred during login: %s", err)
                 errors["base"] = "unknown"
             else:
                 await self.async_set_unique_id(user_input[CONF_EMAIL].lower())
